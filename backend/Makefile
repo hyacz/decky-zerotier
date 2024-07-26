@@ -7,6 +7,8 @@ zerotier-one:
 zerotier: zerotier-one
 	mkdir -p ./out
 	cp ./zerotier/zerotier-one ./out/
+	ln -sf zerotier-one ./out/zerotier-idtool
+	ln -sf zerotier-one ./out/zerotier-cli
 
 .PHONY: clean 
 clean:
