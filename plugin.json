@@ -1,7 +1,8 @@
 {
-  "name": "decky-zerotier",
+  "name": "Decky Zerotier",
   "author": "Hyacz",
-  "flags": [],
+  "api_version": 1,
+  "flags": ["root", "debug"],
   "publish": {
     "tags": ["zerotier", "network"],
     "description": "A Decky plugin for Zerotier",
