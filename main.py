@@ -1,8 +1,7 @@
 import os
-import subprocess as sp
-import threading
 import json
 import asyncio
+from subprocess import CalledProcessError
 
 # The decky plugin module is located at decky-loader/plugin
 # For easy intellisense checkout the decky-loader code one directory up
@@ -11,60 +10,95 @@ import decky
 
 ZT_ONE = os.path.join(decky.DECKY_PLUGIN_DIR, 'bin', 'zerotier-one')
 ZT_HOME = decky.DECKY_PLUGIN_SETTINGS_DIR
+ZT_NETCONF = os.path.join(ZT_HOME, 'decky_networks.json')
+
+# Force LD_LIBRARY_PATH to include system paths for libssl
+env = os.environ.copy()
+env['LD_LIBRARY_PATH'] = '/usr/lib:/usr/lib64'
 
 class Plugin:
-    async def apiproxy(self, command) -> dict:
-        # Change LD_LIBRARY_PATH to include system paths for libssl
-        env = os.environ.copy()
-        env['LD_LIBRARY_PATH'] = '/usr/lib:/usr/lib64'
+    @staticmethod
+    async def zerotier_cli(command: list[str]) -> tuple[bytes, bytes]:
+        cmd = [ZT_ONE, '-q', '-j', f'-D{ZT_HOME}', *command]
 
-        cmd = [ZT_ONE, '-q', '-j', f'-D{ZT_HOME}', command]
-        decky.logger.info(cmd)
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            env=env
+        )
         
-        try:
-            output = sp.check_output(cmd, env=env)
-        except sp.CalledProcessError as e:
-            decky.logger.error(f'Error running ZeroTier-CLI: {e.output.decode("utf-8")}', exc_info=True)
-            return {'error': str(e)}
-        
-        output = json.loads() 
-        decky.logger.info(output)
+        stdout, stderr = await proc.communicate()
 
-        return output
-        
+        if proc.returncode == 0:
+            decky.logger.info(' '.join(cmd))
+            decky.logger.info(f'ZeroTier-CLI exited with code {proc.returncode}')
+            decky.logger.info(stdout.decode('utf-8'))
+        else:
+            decky.logger.error(f'ZeroTier-CLI exited with code {proc.returncode}')
+            raise CalledProcessError(proc.returncode, cmd, stdout=stdout, stderr=stderr)
+
+        return stdout, stderr
+
+    @staticmethod
+    async def _read_stream(stream, cb):
+        while True:
+            line = await stream.readline()
+            if line:
+                cb(line.decode('utf-8').strip())
+            else:
+                break
+    
+    async def info(self) -> dict:
+        stdout, _ = await self.zerotier_cli(['info'])
+        return json.loads(stdout.decode('utf-8'))
+
+    async def list_networks(self) -> list[dict]:
+        stdout, _ = await self.zerotier_cli(['listnetworks'])
+        networks = json.loads(stdout.decode('utf-8'))
+
+        if os.path.exists(ZT_NETCONF):
+            with open(ZT_NETCONF, 'r') as f:
+                netconf = []
+
+                try:
+                    netconf = json.load(f)
+                except json.JSONDecodeError:
+                    decky.logger.warning('Invalid JSON in networks conf')
+
+                for net in netconf:
+                    if net['id'] not in [n['id'] for n in networks]:
+                        net['status'] = 'DISCONNECTED'
+                        networks.append(net)
+
+        with open(ZT_NETCONF, 'w') as f:
+            json.dump(networks, f)
+            
+        return networks
+    
     # Asyncio-compatible long-running code, executed in a task when the plugin is loaded
     async def _main(self) -> None:
         decky.logger.info('Starting ZeroTier...')
 
-        # Change LD_LIBRARY_PATH to include system paths for libssl
-        env = os.environ.copy()
-        env['LD_LIBRARY_PATH'] = '/usr/lib:/usr/lib64'
-
         cmd = [ZT_ONE, ZT_HOME]
-        decky.logger.info(cmd)
-        self.task = sp.Popen(cmd, stdout=sp.PIPE, stderr=sp.PIPE, env=env)
+        decky.logger.info(' '.join(cmd))
+        
+        self.process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
+            env=env
+        )
 
-        while True:
-            # Retrieve stdout and stderr line by line from subprocess
-            stdout = self.task.stdout.readline().decode('utf-8').strip()
-            stderr = self.task.stderr.readline().decode('utf-8').strip()
-            if self.task.returncode is not None:
-                decky.logger.info(f'[ZeroTier]: Exited with code({self.task.returncode})')
-                break
-            if stdout:
-                decky.logger.info(f'[ZeroTier]: {stdout}')
-            if stderr:
-                decky.logger.error(f'[ZeroTier]: {stderr}')
+        await self._read_stream(self.process.stdout, decky.logger.info)
+        
+        self.process.wait()
 
 
     # Function called first during the unload process, utilize this to handle your plugin being stopped, but not
     # completely removed
     async def _unload(self) -> None:
         decky.logger.info('Stopping ZeroTier...')
-        try:
-            self.task.terminate()
-        except:
-            decky.logger.error(f'Failed to stop ZeroTier (PID: {self.task.pid})', exc_info=True)
 
 
     # Function called after `_unload` during uninstall, utilize this to clean up processes and other remnants of your
