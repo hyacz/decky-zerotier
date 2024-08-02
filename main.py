@@ -24,7 +24,7 @@ class Plugin:
         proc = await asyncio.create_subprocess_exec(
             *cmd,
             stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
             env=env
         )
         
@@ -36,6 +36,7 @@ class Plugin:
             decky.logger.info(stdout.decode('utf-8'))
         else:
             decky.logger.error(f'ZeroTier-CLI exited with code {proc.returncode}')
+            decky.logger.error(stdout.decode('utf-8'))
             raise CalledProcessError(proc.returncode, cmd, stdout=stdout, stderr=stderr)
 
         return stdout, stderr
@@ -75,6 +76,41 @@ class Plugin:
             json.dump(networks, f)
             
         return networks
+    
+    async def join_network(self, network_id: str) -> list[dict]:
+        stdout, _ = await self.zerotier_cli(['join', network_id])
+        decky.logger.info(f'Joined network {network_id}: {stdout.decode("utf-8").strip()}')
+
+        return await self.list_networks()
+    
+    async def disconnect_network(self, network_id: str) -> list[dict]:
+        networks = await self.list_networks()
+        stdout, _ = await self.zerotier_cli(['leave', network_id])
+        decky.logger.info(f'Left network {network_id}: {stdout.decode("utf-8").strip()}')
+
+        networks_ = []
+        for net in networks:
+            if net['id'] == network_id:
+                net['status'] = 'DISCONNECTED'
+            networks_.append(net)
+
+        with open(ZT_NETCONF, 'w') as f:
+            json.dump(networks, f)
+        
+        return networks
+    
+    async def forget_network(self, network_id: str) -> list[dict]:
+        stdout, _ = await self.zerotier_cli(['leave', network_id])
+        decky.logger.info(f'Forgotten network {network_id}: {stdout.decode("utf-8").strip()}')
+
+        if os.path.exists(ZT_NETCONF):
+            with open(ZT_NETCONF, 'r') as f:
+                netconf = json.load(f)
+            netconf_ = [net for net in netconf if net['id']!= network_id]
+            with open(ZT_NETCONF, 'w') as f:
+                json.dump(netconf_, f)
+
+        return await self.list_networks()
     
     # Asyncio-compatible long-running code, executed in a task when the plugin is loaded
     async def _main(self) -> None:
