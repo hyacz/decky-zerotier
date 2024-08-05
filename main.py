@@ -112,6 +112,19 @@ class Plugin:
 
         return await self.list_networks()
     
+    async def update_networks(self, network_id: str, allowDNS: bool, allowDefault: bool, allowManaged: bool, allowGlobal: bool) -> list[dict]:
+        settings = [
+            f'allowDNS={int(allowDNS)}',
+            f'allowDefault={int(allowDefault)}',
+            f'allowManaged={int(allowManaged)}',
+            f'allowGlobal={int(allowGlobal)}'
+        ]
+
+        stdout, _ = await self.zerotier_cli(['update', network_id, *settings])
+        decky.logger.info(f'Update network {network_id}: {stdout.decode("utf-8").strip()}')
+
+        return await self.list_networks()
+        
     # Asyncio-compatible long-running code, executed in a task when the plugin is loaded
     async def _main(self) -> None:
         decky.logger.info('Starting ZeroTier...')
