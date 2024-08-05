@@ -1,53 +1,65 @@
 import {
-  ButtonItem,
   PanelSection,
-  PanelSectionRow
+  PanelSectionRow,
+  showModal,
+  DialogButton,
+  ShowModalResult
 } from "@decky/ui";
 
-import { callable, definePlugin } from '@decky/api';
+import { callable, toaster, definePlugin } from '@decky/api';
 
 import { useEffect, useState } from "react";
-import { FaRegSquare, FaRegSquareCheck, FaRegSquareMinus, FaGear } from "react-icons/fa6";
 
 import { Network, NodeStatus } from "./services/zerotier";
+import JoinNetworkModal from "./components/JoinNetworkModal";
+import NetworkButton from "./components/NetworkButton";
 
 const info = callable<[], NodeStatus>("info");
-const listnetworks = callable<[], Network[]>("list_networks");
+const listNetworks = callable<[], Network[]>("list_networks");
+const joinNetwork = callable<[string], Network[]>("join_network"); 
+const disconnectNetwork = callable<[string], Network[]>("disconnect_network");
+const forgetNetwork = callable<[string], Network[]>("forget_network");
 
 function Content () {
-  const [counter,   setCounter  ] = useState(0);
   const [nodeState, setNodeState] = useState<NodeStatus>({address: "None" , online: false, version: 'None'});
   const [networks , setNetworks ] = useState<Network[]>([]);
+  const [modalResult, setModalResult] = useState<ShowModalResult | null>(null);
 
   useEffect(() => {
-    info().then(response => {
-      setNodeState(response);
-    });
+    const fetchData = async () => {
+      info().then(response => {
+        setNodeState(response);
+      });
 
-    listnetworks().then(response => {
-      setNetworks(response.map(network => network as Network));
-    })
+      listNetworks().then(response => {
+        setNetworks(response.map(network => network as Network));
+      })
+
+      toaster.toast({title: "Connected to ZeroTier", body: "Version: " + nodeState.version})
+    };
+
+    // fetch data initially and then every 5 seconds
+    fetchData();
+    const interval = setInterval(fetchData, 5000);
+
+    // clean up the interval when the plugin is unmounted
+    return () => clearInterval(interval);
   }, []);
 
-  const onClick1 = async () => {
-      setCounter(counter + 1);
-      listnetworks().then(response => {
+  const openModal = () => {
+      const result = showModal(<JoinNetworkModal closeModal={closeModal} />);
+      setModalResult(result);
+  };
+
+  const closeModal = () => {
+      modalResult?.Close();
+      setModalResult(null);
+      
+      // fresh the networks list
+      listNetworks().then(response => {
         setNetworks(response.map(network => network as Network));
       })
   };
-
-  const networksList = networks.map(network => 
-    <PanelSectionRow key={network.id}>
-      <ButtonItem
-        label={network.name}
-        icon={network.status == "OK"? <FaRegSquareCheck /> : <FaRegSquare />}
-        description={network.id}
-        layout="inline"
-      >
-        <FaGear />
-      </ButtonItem>
-    </PanelSectionRow>
-  );
 
   return (
     <div>
@@ -57,12 +69,16 @@ function Content () {
           {"Online: " + nodeState.online}<br />
           {"Zerotier Version: " + nodeState.version}<br />
         </PanelSectionRow>
-        <PanelSectionRow>
-          <ButtonItem layout="below" onClick={onClick1}> Update {counter} </ButtonItem>
-        </PanelSectionRow>
       </PanelSection>
       <PanelSection title="Networks">
-        {networksList}
+        <PanelSectionRow>
+          <DialogButton onClick={openModal}>Join New Network...</DialogButton>
+        </PanelSectionRow>
+        {networks.map(net=> 
+          <PanelSectionRow>
+            <NetworkButton network={net} />
+          </PanelSectionRow>
+        )}
       </PanelSection>
     </div>
   );

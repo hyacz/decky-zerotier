@@ -31,13 +31,13 @@
     "@types/react-dom": "18.3.0",
     "@types/webpack": "^5.28.5",
     "rollup": "^4.18.0",
-    "tslib": "^2.6.3",
     "typescript": "^5.5.3"
   },
   "dependencies": {
     "@decky/api": "^1.1.0",
-    "@decky/ui": "^4.6.0",
-    "react-icons": "^5.2.1"
+    "@decky/ui": "^4.7.0",
+    "react-icons": "^5.2.1",
+    "tslib": "^2.6.3"
   },
   "pnpm": {
     "peerDependencyRules": {
