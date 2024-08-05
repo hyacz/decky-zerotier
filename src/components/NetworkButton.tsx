@@ -1,7 +1,7 @@
 import { FaRegSquareCheck, FaRegSquare, FaRegSquareMinus, FaGear } from 'react-icons/fa6';
 
 import { Network } from '../services/zerotier';
-import { DialogButton, Field } from '@decky/ui';
+import { DialogButton, Field} from '@decky/ui';
 
 const NetworkStatusIcon: React.FC<{ status: string }> = ({ status }) => {
   const size = 20;
@@ -16,8 +16,9 @@ const NetworkStatusIcon: React.FC<{ status: string }> = ({ status }) => {
   }
 };
 
-const NetworkButton: React.FC<{network: Network}> = ({ network }) => {
+const NetworkButton: React.FC<{network: Network, onClick: () => void}> = ({ network, onClick }) => {
   const name = network.name? network.name : network.status;
+
   return(
     <Field
       label={<>
@@ -27,7 +28,7 @@ const NetworkButton: React.FC<{network: Network}> = ({ network }) => {
       icon={<NetworkStatusIcon status={network.status} />}
       childrenLayout='inline'
     >
-      <DialogButton style={{ minWidth: 'unset', padding: '10px', lineHeight: '12px' }}>
+      <DialogButton onClick={onClick} style={{ minWidth: 'unset', padding: '10px', lineHeight: '12px' }}>
         <FaGear />
       </DialogButton>
     </Field>

@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import { Network, NodeStatus } from "./services/zerotier";
 import JoinNetworkModal from "./components/JoinNetworkModal";
 import NetworkButton from "./components/NetworkButton";
+import NetworkDetailModal from "./components/NetworkDetailModal";
 
 const info = callable<[], NodeStatus>("info");
 const listNetworks = callable<[], Network[]>("list_networks");
@@ -46,10 +47,16 @@ function Content () {
     return () => clearInterval(interval);
   }, []);
 
-  const openModal = () => {
-      const result = showModal(<JoinNetworkModal closeModal={closeModal} />);
-      setModalResult(result);
+  const openJoinModal = () => {
+    const result = showModal(<JoinNetworkModal closeModal={closeModal} />);
+    setModalResult(result);
   };
+
+  const openDetailModal = (network: Network) => {
+    const result = showModal(<NetworkDetailModal network={network} closeModal={closeModal} />);
+    setModalResult(result);
+  };
+
 
   const closeModal = () => {
       modalResult?.Close();
@@ -70,13 +77,13 @@ function Content () {
           {"Zerotier Version: " + nodeState.version}<br />
         </PanelSectionRow>
         <PanelSectionRow>
-          <DialogButton onClick={openModal}>Join New Network...</DialogButton>
+          <DialogButton onClick={openJoinModal}>Join New Network...</DialogButton>
         </PanelSectionRow>
       </PanelSection>
       <PanelSection title="Networks">
         {networks.map(net=> 
           <PanelSectionRow>
-            <NetworkButton network={net} />
+            <NetworkButton network={net} onClick={()=>openDetailModal(net)}/>
           </PanelSectionRow>
         )}
       </PanelSection>
