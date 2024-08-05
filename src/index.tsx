@@ -35,7 +35,7 @@ function Content () {
         setNetworks(response.map(network => network as Network));
       })
 
-      toaster.toast({title: "Connected to ZeroTier", body: "Version: " + nodeState.version})
+      // toaster.toast({title: "Connected to ZeroTier", body: "Version: " + nodeState.version})
     };
 
     // fetch data initially and then every 5 seconds
@@ -69,11 +69,11 @@ function Content () {
           {"Online: " + nodeState.online}<br />
           {"Zerotier Version: " + nodeState.version}<br />
         </PanelSectionRow>
-      </PanelSection>
-      <PanelSection title="Networks">
         <PanelSectionRow>
           <DialogButton onClick={openModal}>Join New Network...</DialogButton>
         </PanelSectionRow>
+      </PanelSection>
+      <PanelSection title="Networks">
         {networks.map(net=> 
           <PanelSectionRow>
             <NetworkButton network={net} />
