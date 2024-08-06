@@ -19,6 +19,18 @@ env['LD_LIBRARY_PATH'] = '/usr/lib:/usr/lib64'
 class Plugin:
     @staticmethod
     async def zerotier_cli(command: list[str]) -> tuple[bytes, bytes]:
+        """
+        Executes the ZeroTier-CLI command with the provided arguments.
+
+        Parameters:
+        command (list[str]): A list of strings representing the command and its arguments.
+
+        Returns:
+        tuple[bytes, bytes]: A tuple containing the standard output and standard error of the command.
+
+        Raises:
+        CalledProcessError: If the ZeroTier-CLI command returns a non-zero exit code.
+        """
         cmd = [ZT_ONE, '-q', '-j', f'-D{ZT_HOME}', *command]
 
         proc = await asyncio.create_subprocess_exec(
@@ -41,20 +53,134 @@ class Plugin:
 
         return stdout, stderr
 
+
     @staticmethod
     async def _read_stream(stream, cb):
+        """
+        Reads a stream line by line and calls a callback function with each line.
+
+        This function is designed to be used with asyncio's StreamReader objects, such as those returned by
+        asyncio.subprocess.PIPE. It reads the stream line by line, decodes the bytes to a UTF-8 string, strips
+        leading/trailing whitespace, and then calls the provided callback function with the decoded line.
+
+        Parameters:
+        stream (asyncio.StreamReader): The stream to read from.
+        cb (callable): A function that takes a single string argument. This function will be called for each
+                        line read from the stream.
+
+        Returns:
+        None
+        """
         while True:
             line = await stream.readline()
             if line:
                 cb(line.decode('utf-8').strip())
             else:
                 break
-    
+
+
     async def info(self) -> dict:
+        """
+        Retrieves information about the ZeroTier network interface.
+
+        This function executes the ZeroTier-CLI command with the 'info' argument and returns the parsed JSON response.
+        The JSON response contains various details about the ZeroTier network interface.
+        {
+            "address": "8ad1b*****",
+            "clock": 1722903840676,
+            "config": {
+                "settings": {
+                    "allowTcpFallbackRelay": true,
+                    "forceTcpRelay": false,
+                    "homeDir": "/home/deck/homebrew/settings/decky-zerotier",
+                    "listeningOn": [],
+                    "portMappingEnabled": true,
+                    "primaryPort": 9993,
+                    "secondaryPort": 28820,
+                    "softwareUpdate": "disable",
+                    "softwareUpdateChannel": "release",
+                    "surfaceAddresses": [],
+                    "tertiaryPort": 23494
+                }
+            },
+            "online": false,
+            "planetWorldId": 1496*****,
+            "planetWorldTimestamp": 1644592324813,
+            "publicIdentity": "8ad1b5d1a4:0:5be4396e895539bcd221491*********************************************************************************************************",
+            "tcpFallbackActive": false,
+            "version": "1.14.0",
+            "versionBuild": 0,
+            "versionMajor": 1,
+            "versionMinor": 14,
+            "versionRev": 0
+        }
+
+        Parameters:
+        None
+
+        Returns:
+        dict: A dictionary containing the parsed JSON response from the ZeroTier-CLI 'info' command.
+
+        Raises:
+        CalledProcessError: If the ZeroTier-CLI command returns a non-zero exit code.
+        """
         stdout, _ = await self.zerotier_cli(['info'])
         return json.loads(stdout.decode('utf-8'))
 
+
     async def list_networks(self) -> list[dict]:
+        """
+        Retrieves a list of ZeroTier networks and their configurations.
+
+        This function executes the ZeroTier-CLI 'listnetworks' command, and merges it with the ZT_NETCONF file. 
+        If the ZT_NETCONF file exists, it adds any missing networks with a 'DISCONNECTED' status.
+        Finally written back to the ZT_NETCONF file.
+
+        [{
+            "allowDNS": false,
+            "allowDefault": false,
+            "allowGlobal": false,
+            "allowManaged": true,
+            "assignedAddresses": ["10.10.0.***/24"],
+            "bridge": false,
+            "broadcastEnabled": true,
+            "dhcp": false,
+            "dns": {
+            "domain": "",
+            "servers": []
+            },
+            "id": "48d6023*********",
+            "mac": "da:05:ab:**:**:**",
+            "mtu": 2800,
+            "multicastSubscriptions": [{
+                "adi": 0,
+                "mac": "01:00:5e:**:**:**"
+            }],
+            "name": "GamingRoom",
+            "netconfRevision": 20,
+            "nwid": "48d6023*********",
+            "portDeviceName": "ztos******",
+            "portError": 0,
+            "routes": [{
+                "flags": 0,
+                "metric": 0,
+                "target": "10.10.0.0/24",
+                "via": null
+            }],
+            "status": "OK",
+            "type": "PUBLIC"
+        }]
+
+        Parameters:
+        None
+
+        Returns:
+        list[dict]: A list of dictionaries, where each dictionary represents a ZeroTier network. Each dictionary
+                contains the following keys: 'id', 'name', 'private', 'status', and 'routes'.
+
+        Raises:
+        CalledProcessError: If the ZeroTier-CLI command returns a non-zero exit code.
+        """
         stdout, _ = await self.zerotier_cli(['listnetworks'])
         networks = json.loads(stdout.decode('utf-8'))
 
@@ -77,13 +203,43 @@ class Plugin:
             
         return networks
     
+
     async def join_network(self, network_id: str) -> list[dict]:
+        """
+        Joins a ZeroTier network with the specified network ID.
+
+        This function executes the ZeroTier-CLI 'join' command with the provided network ID.
+
+        Parameters:
+        network_id (str): The ID of the ZeroTier network to join.
+
+        Returns:
+        list[dict]: Same as the `list_networks` method.
+
+        Raises:
+        CalledProcessError: If the ZeroTier-CLI command returns a non-zero exit code.
+        """
         stdout, _ = await self.zerotier_cli(['join', network_id])
         decky.logger.info(f'Joined network {network_id}: {stdout.decode("utf-8").strip()}')
 
         return await self.list_networks()
     
     async def disconnect_network(self, network_id: str) -> list[dict]:
+        """
+        Disconnects from a ZeroTier network with the specified network ID.
+
+        This function executes the ZeroTier-CLI 'leave' command with the provided network ID.
+        And save the network with 'DISCONNECTED' status to the local network configuration file (ZT_NETCONF).
+
+        Parameters:
+        network_id (str): The ID of the ZeroTier network to disconnect from.
+
+        Returns:
+        list[dict]: Same as the `list_networks` method.
+
+        Raises:
+        CalledProcessError: If the ZeroTier-CLI command returns a non-zero exit code.
+        """
         networks = await self.list_networks()
         stdout, _ = await self.zerotier_cli(['leave', network_id])
         decky.logger.info(f'Left network {network_id}: {stdout.decode("utf-8").strip()}')
@@ -100,6 +256,22 @@ class Plugin:
         return networks
     
     async def forget_network(self, network_id: str) -> list[dict]:
+        """
+        Forgets a ZeroTier network with the specified network ID.
+
+        This function executes the ZeroTier-CLI 'leave' command with the provided network ID,
+        and removes the network from the local network configuration file (ZT_NETCONF).
+
+        Parameters:
+        network_id (str): The ID of the ZeroTier network to forget.
+
+        Returns:
+        list[dict]: A list of dictionaries, where each dictionary represents a ZeroTier network. Each dictionary
+                    contains the following keys: 'id', 'name', 'private', 'status', and 'routes'.
+
+        Raises:
+        CalledProcessError: If the ZeroTier-CLI command returns a non-zero exit code.
+        """
         stdout, _ = await self.zerotier_cli(['leave', network_id])
         decky.logger.info(f'Forgotten network {network_id}: {stdout.decode("utf-8").strip()}')
 
@@ -113,7 +285,26 @@ class Plugin:
         return await self.list_networks()
     
     async def update_network(self, network_id: str, option: str, value: bool) -> list[dict]:
-        # options: allowDNS, allowDefault, allowManaged, allowGlobal
+        """
+        Updates a specific network configuration option for a ZeroTier network.
+
+        This function executes the ZeroTier-CLI 'set' command with the provided network ID, option, and value.
+
+        Parameters:
+        network_id (str): The ID of the ZeroTier network to update.
+        option (str): The network configuration option to update. 
+            'allowDNS': Allow DNS Configuration
+            'allowDefault':Allow Default Router Override
+            'allowManaged: Allow Managed Address
+            'allowGlobal':Allow Assignment of Global IPs
+        value (bool): The new value for the specified network configuration option.
+
+        Returns:
+        list[dict]: Same as the `list_networks` method.
+
+        Raises:
+        CalledProcessError: If the ZeroTier-CLI command returns a non-zero exit code.
+        """
         stdout, _ = await self.zerotier_cli(['set', network_id, f'{option}={int(value)}'])
         decky.logger.info(f'Update network {network_id}: {stdout.decode("utf-8").strip()}')
 

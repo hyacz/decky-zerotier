@@ -1,10 +1,10 @@
 import { callable, toaster } from "@decky/api";
 import { ConfirmModal, DialogBody, Focusable, TextField } from "@decky/ui";
-import { Network } from "../services/zerotier";
+import { Network } from "../model";
 import { useState } from "react";
 
 const JoinNetworkModal: React.FC<{ closeModal: () => void }> = ({ closeModal }) => {
-  const joinNetwork = callable<[string], Network[]>("join_network"); 
+  const joinNetwork = callable<[string], Network[]>("join_network");
   const [netID, setNetID] = useState<string>("abcde");
   const [bOKDisabled, setBOKDisabled] = useState<boolean>(true);
 
@@ -17,7 +17,7 @@ const JoinNetworkModal: React.FC<{ closeModal: () => void }> = ({ closeModal }) 
       onCancel={closeModal}
       onOK={() => {
         joinNetwork(netID)
-        toaster.toast({title: "Joining network...", body: netID});
+        toaster.toast({ title: "Joining network...", body: netID });
         closeModal();
       }}
 
