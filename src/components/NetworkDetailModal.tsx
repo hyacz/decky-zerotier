@@ -1,5 +1,5 @@
 import { callable, toaster } from "@decky/api";
-import { ConfirmModal, DialogBody, DialogControlsSection, DialogControlsSectionHeader, DialogSubHeader, Focusable, TextField, ToggleField } from "@decky/ui";
+import { ConfirmModal, DialogSubHeader, Field, ToggleField } from "@decky/ui";
 import { Network } from "../services/zerotier";
 import { useState } from "react";
 
@@ -12,9 +12,14 @@ const NetworkDetailModal: React.FC<NetworkDetailModalProps> = ({ network, closeM
   const joinNetwork = callable<[netID: string], Network[]>("join_network");
   const disconnectNetwork = callable<[netID: string], Network[]>("disconnect_network");
   const forgetNetwork = callable<[netID: string], Network[]>("forget_network");
-  const updateNetwork = callable<[netID: string, allowDNS: boolean, allowDefault: boolean, allowManaged: boolean, allowGlobal:boolean], Network[]>("update_network");
+  const updateNetwork = callable<[netID: string, option: string, value: boolean], Network[]>("update_network");
 
   const [net, setNet] = useState<Network>(network);
+
+  const handleOnChange = (option: string, value: boolean) => {
+    setNet(prevState => ({...prevState, [option]: value }));
+    updateNetwork(net.id, option, value);
+  }
 
   if (net.status === "DISCONNECTED") {
     return (
@@ -24,12 +29,12 @@ const NetworkDetailModal: React.FC<NetworkDetailModalProps> = ({ network, closeM
         strMiddleButtonText="Forget"
         onOK={() => {
           joinNetwork(net.id);
-          toaster.toast({title: "Connecting network...", body: net.id});
+          // toaster.toast({ title: "Connecting network...", body: net.id });
           closeModal();
         }}
         onMiddleButton={() => {
           forgetNetwork(net.id);
-          toaster.toast({title: "Forgetting network...", body: net.id});
+          // toaster.toast({ title: "Forgetting network...", body: net.id });
           closeModal();
         }}
         onCancel={closeModal}
@@ -39,25 +44,27 @@ const NetworkDetailModal: React.FC<NetworkDetailModalProps> = ({ network, closeM
     return (
       <ConfirmModal
         strTitle={net.name ? net.name : "UNKNOW NAME"}
-        strDescription="Please enter the 16-digit network ID to join."
-        onCancel={closeModal}
+        strOKButtonText="Disconnect"
         onOK={() => {
-          updateNetwork(net.id, net.allowDNS, net.allowDefault, net.allowManaged, net.allowGlobal);
-          toaster.toast({title: "Update network...", body: net.id});
+          disconnectNetwork(net.id);
           closeModal();
         }}
+        strCancelButtonText="Close"
+        onCancel={closeModal}
       >
-        <DialogSubHeader>{network.id}</DialogSubHeader>
-        <DialogControlsSection>
-        111
-        </DialogControlsSection>
-        <DialogControlsSectionHeader>Settings</DialogControlsSectionHeader>
-        <DialogControlsSection>
-          <ToggleField label="allowDNS" checked={net.allowDNS} onChange={(evt) => setNet({...net, allowDNS: evt})} />
-          <ToggleField label="allowDefault" checked={net.allowDefault} onChange={(evt) => setNet({...net, allowDefault: evt})} />
-        </DialogControlsSection>
-        
-        
+        <DialogSubHeader style={{textTransform: "none"}}>
+          {"Network ID: " + net.id}<br />
+          {"Status: " + net.status}<br />
+          {"Type: " + net.type}<br />
+          {"Device: " + net.portDeviceName}<br />
+          {"MAC Address: " + net.mac}
+        </DialogSubHeader>
+          <Field label={"Assigned Address: "} />
+          {net.assignedAddresses.map(addr => <Field indentLevel={2} label={addr} />)}
+          <ToggleField label="Allow Managed Address" disabled={net.status!=="OK"} checked={net.allowManaged} onChange={(val) => handleOnChange("allowManaged", val)} />
+          <ToggleField label="Allow DNS Configuration" disabled={net.status!=="OK"} checked={net.allowDNS} onChange={(val) => handleOnChange("allowDNS", val)} />
+          <ToggleField label="Allow Default Router Override" disabled={net.status!=="OK"} checked={net.allowDefault} onChange={(val) => handleOnChange("allowDefault", val)} />
+          <ToggleField label="Allow Assignment of Global IPs" disabled={net.status!=="OK"} checked={net.allowGlobal} onChange={(val) => handleOnChange("allowGlobal", val)} />
       </ConfirmModal>
     )
   }

@@ -112,15 +112,9 @@ class Plugin:
 
         return await self.list_networks()
     
-    async def update_network(self, network_id: str, allowDNS: bool, allowDefault: bool, allowManaged: bool, allowGlobal: bool) -> list[dict]:
-        settings = [
-            f'allowDNS={int(allowDNS)}',
-            f'allowDefault={int(allowDefault)}',
-            f'allowManaged={int(allowManaged)}',
-            f'allowGlobal={int(allowGlobal)}'
-        ]
-
-        stdout, _ = await self.zerotier_cli(['set', network_id, *settings])
+    async def update_network(self, network_id: str, option: str, value: bool) -> list[dict]:
+        # options: allowDNS, allowDefault, allowManaged, allowGlobal
+        stdout, _ = await self.zerotier_cli(['set', network_id, f'{option}={int(value)}'])
         decky.logger.info(f'Update network {network_id}: {stdout.decode("utf-8").strip()}')
 
         return await self.list_networks()
