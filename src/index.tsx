@@ -6,7 +6,7 @@ import {
   ShowModalResult
 } from "@decky/ui";
 
-import { callable, toaster, definePlugin } from '@decky/api';
+import { callable, definePlugin } from '@decky/api';
 
 import { useEffect, useState } from "react";
 

@@ -1,4 +1,4 @@
-import { callable, toaster } from "@decky/api";
+import { callable } from "@decky/api";
 import { ConfirmModal, DialogSubHeader, Field, ToggleField } from "@decky/ui";
 import { Network } from "../model";
 import { useState } from "react";

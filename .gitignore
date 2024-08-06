@@ -56,3 +56,4 @@ cli/
 cli/*
 cli/decky
 bin/
+deck.json

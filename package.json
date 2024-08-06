@@ -1,6 +1,6 @@
 {
   "name": "decky-zerotier",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A Decky plugin for Zerotier.",
   "type": "module",
   "scripts": {
@@ -27,6 +27,7 @@
   "homepage": "https://github.com/hyacz/deck-zerotier#readme",
   "devDependencies": {
     "@decky/rollup": "^1.0.1",
+    "@rollup/rollup-linux-x64-musl": "^4.20.0",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",
     "@types/webpack": "^5.28.5",
