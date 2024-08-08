@@ -1,0 +1,42 @@
+name: Build ZeroTier for SteamOS
+
+on:
+  push:
+    paths:
+      - 'zerotier/**'
+
+jobs:
+  build:
+    runs-on: ghcr.io/steamdeckhomebrew/holo-toolchain-rust
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Extract version
+      id: extract_version
+      run: |
+        VERSION=$(grep -Po '(?<=Version:).*' zerotier/zerotier-one.spec | awk '$1=$1')
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+        source /etc/os-release
+        echo "OS_VERSION_ID=$VERSION_ID" >> $GITHUB_ENV
+        echo "OS_BUILD_ID=$BUILD_ID" >> $GITHUB_ENV
+
+    - name: Build ZeroTier
+      working-directory: zerotier
+      env:
+        ENV OPENSSL_LIB_DIR: /usr/lib/
+        OPENSSL_INCLUDE_DIR: /usr/include/openssl
+      run: make
+    
+    - name: Create Release
+      id: create_release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: 'zerotier-v${{ env.VERSION }}'
+        release_name: 'ZeroTierOne ${{ env.VERSION }}'
+        body: 'Build on SteamOS ${{ env.OS_VERSION_ID }} (${{ env.OS_BUILD_ID }})'
+        draft: false
+        prerelease: false
+        files: zerotier/zerotier-one
