@@ -1,13 +1,14 @@
 name: Build ZeroTier for SteamOS
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - 'zerotier/**'
 
 jobs:
   build:
-    runs-on: ghcr.io/steamdeckhomebrew/holo-toolchain-rust
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
@@ -19,23 +20,27 @@ jobs:
       run: |
         VERSION=$(grep -Po '(?<=Version:).*' zerotier/zerotier-one.spec | awk '$1=$1')
         echo "VERSION=$VERSION" >> $GITHUB_ENV
-        source /etc/os-release
-        echo "OS_VERSION_ID=$VERSION_ID" >> $GITHUB_ENV
-        echo "OS_BUILD_ID=$BUILD_ID" >> $GITHUB_ENV
+        docker run --rm \
+          ghcr.io/steamdeckhomebrew/holo-toolchain-rust \
+          bash -c "source /etc/os-release && \
+            echo OS_VERSION_ID=\$VERSION_ID && \
+            echo OS_BUILD_ID=\$BUILD_ID" >> $GITHUB_ENV
 
     - name: Build ZeroTier
-      working-directory: zerotier
-      env:
-        ENV OPENSSL_LIB_DIR: /usr/lib/
-        OPENSSL_INCLUDE_DIR: /usr/include/openssl
-      run: make
+      run: |
+        docker run --rm \
+          -e OPENSSL_LIB_DIR=/usr/lib/ \
+          -e OPENSSL_INCLUDE_DIR=/usr/include/openssl \
+          -v ./zerotier:/zerotier \
+          ghcr.io/steamdeckhomebrew/holo-toolchain-rust \
+          bash -c "cd zerotier && make -j 4"
     
     - name: Create Release
       id: create_release
       uses: softprops/action-gh-release@v1
       with:
         tag_name: 'zerotier-v${{ env.VERSION }}'
-        release_name: 'ZeroTierOne ${{ env.VERSION }}'
+        name: 'ZeroTierOne ${{ env.VERSION }}'
         body: 'Build on SteamOS ${{ env.OS_VERSION_ID }} (${{ env.OS_BUILD_ID }})'
         draft: false
         prerelease: false
