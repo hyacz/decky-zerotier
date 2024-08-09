@@ -1,8 +1,13 @@
 {
   "name": "decky-zerotier",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A Decky plugin for Zerotier.",
   "type": "module",
+  "remote_binary": {
+    "name": "zerotier-one",
+    "url": "https://github.com/hyacz/decky-zerotier/releases/download/zerotier-v1.14.0/zerotier-one",
+    "sha256hash": "2a760334e4183dfa82dac10e1627fef9fa0a895a753e46d3a215acad1fe21dc9"
+  },
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -c -w",
