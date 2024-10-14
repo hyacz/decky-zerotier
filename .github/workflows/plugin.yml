@@ -34,14 +34,14 @@ jobs:
     - name: Extract version
       run: |
         VERSION=$(grep version package.json | cut -d\" -f 4)
-        mv "out/Decky Zerotier.zip" "out/Decky Zerotier $VERSION.zip"
+        sudo mv "out/Decky Zerotier.zip" "out/decky-zerotier-v${VERSION}.zip"
         echo "VERSION=$VERSION" >> $GITHUB_ENV
 
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
         tag_name: 'v${{ env.VERSION }}'
-        name: 'Decky Zerotier ${{ env.VERSION }}'
+        name: 'Decky Zerotier v${{ env.VERSION }}'
         draft: false
         prerelease: false
-        files: "out/Decky Zerotier ${{ env.VERSION }}.zip"
+        files: "out/decky-zerotier-v${{ env.VERSION }}.zip"
