@@ -34,7 +34,7 @@ jobs:
     - name: Extract version
       run: |
         VERSION=$(grep version package.json | cut -d\" -f 4)
-        mv "out/Decky Zerotier.zip" "out/Decky Zerotier $VERSION.zip"
+        sudo mv "out/Decky Zerotier.zip" "out/Decky Zerotier $VERSION.zip"
         echo "VERSION=$VERSION" >> $GITHUB_ENV
 
     - name: Create Release
