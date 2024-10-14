@@ -18,7 +18,7 @@ jobs:
     - name: Download Decky CLI
       run: |
         mkdir /tmp/decky-cli
-        curl -L -o /tmp/decky-cli/decky "https://github.com/SteamDeckHomebrew/cli/releases/download/0.0.2/decky-linux-x86_64"
+        curl -L -o /tmp/decky-cli/decky "https://github.com/SteamDeckHomebrew/cli/releases/download/0.0.4/decky-linux-x86_64"
         chmod +x /tmp/decky-cli/decky
 
         echo "/tmp/decky-cli" >> $GITHUB_PATH
@@ -27,7 +27,7 @@ jobs:
       run: |
         echo "::group::Building plugin $plugin"
 
-        sudo $(which decky) plugin build -b -o
+        sudo $(which decky) plugin build -b -o ./out
 
         echo "::endgroup::"
     
@@ -41,7 +41,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         tag_name: 'v${{ env.VERSION }}'
-        release_name: 'Decky Zerotier ${{ env.VERSION }}'
+        name: 'Decky Zerotier ${{ env.VERSION }}'
         draft: false
         prerelease: false
         files: "out/Decky Zerotier ${{ env.VERSION }}.zip"
