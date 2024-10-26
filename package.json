@@ -1,6 +1,6 @@
 {
   "name": "decky-zerotier",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A Decky plugin for Zerotier.",
   "type": "module",
   "remote_binary": [{
