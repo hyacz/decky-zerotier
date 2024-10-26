@@ -2,9 +2,6 @@ name: Build ZeroTier for SteamOS
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'zerotier/**'
 
 jobs:
   build:
