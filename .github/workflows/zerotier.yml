@@ -34,7 +34,7 @@ jobs:
     
     - name: Get SHA256
       run:
-        echo SHA256=$(shasum -a 256 zerotier/zerotier-one.spec | cut -d " " -f 1) >> $GITHUB_ENV
+        echo SHA256=$(shasum -a 256 zerotier/zerotier-one | cut -d " " -f 1) >> $GITHUB_ENV
 
     - name: Create Release
       id: create_release
