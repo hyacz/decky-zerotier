@@ -27,14 +27,14 @@ jobs:
       run: |
         echo "::group::Building plugin $plugin"
 
-        sudo $(which decky) plugin build -b -o ./out
+        sudo $(which decky) plugin build -b -s directory -o ./out
 
         echo "::endgroup::"
     
     - name: Extract version
       run: |
         VERSION=$(grep version package.json | cut -d\" -f 4)
-        sudo mv "out/Decky Zerotier.zip" "out/decky-zerotier-v${VERSION}.zip"
+        sudo mv "out/decky-zerotier.zip" "out/decky-zerotier-v${VERSION}.zip"
         echo "VERSION=$VERSION" >> $GITHUB_ENV
 
     - name: Create Release
