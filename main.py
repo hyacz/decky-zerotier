@@ -1,4 +1,5 @@
 import os
+import stat
 import json
 import asyncio
 from subprocess import CalledProcessError
@@ -314,6 +315,15 @@ class Plugin:
     async def _main(self) -> None:
         decky.logger.info('Starting ZeroTier...')
 
+        # Check if the ZeroTier-One binary exists
+        if not os.path.exists(ZT_ONE):
+            decky.logger.error(f'ZeroTier-One binary not found at {ZT_ONE}')
+            return
+        
+        # Set the executable permission for the ZeroTier-One binary
+        st = os.stat(ZT_ONE)
+        os.chmod(ZT_ONE, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+        
         cmd = [ZT_ONE, ZT_HOME]
         decky.logger.info(' '.join(cmd))
         
