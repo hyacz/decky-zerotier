@@ -12,8 +12,8 @@ importers:
         specifier: ^1.1.0
         version: 1.1.2
       '@decky/ui':
-        specifier: ^4.9.1
-        version: 4.9.1
+        specifier: ^4.9.2
+        version: 4.9.2
       react-icons:
         specifier: ^5.5.0
         version: 5.5.0(react@18.3.1)
@@ -51,8 +51,8 @@ packages:
   '@decky/rollup@1.0.1':
     resolution: {integrity: sha512-dx1VJwD7ul14PA/aZvOwAfY/GujHzqZJ+MFb4OIUVi63/z4KWMSuZrK6QWo0S4LrNW3RzB3ua6LT0WcJaNY9gw==}
 
-  '@decky/ui@4.9.1':
-    resolution: {integrity: sha512-vVDi5usqBBvEw+ij87GciuaCnysjjTfkNFjDaMM1EzDvNpquKXWHNxNbbsRBZzv4qcjXPxNHU9zZ6VaKpVPVRA==}
+  '@decky/ui@4.9.2':
+    resolution: {integrity: sha512-3cBmBuyctdMhAyE4MtMgK6oEMrjiW2BiMLfSJ/m6qxukRnb2PpvTTyYurnT83vZGVDeygcmcmWjs2nFzGlyLvQ==}
 
   '@isaacs/cliui@8.0.2':
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
@@ -951,7 +951,7 @@ snapshots:
       tslib: 2.8.1
       typescript: 5.8.2
 
-  '@decky/ui@4.9.1': {}
+  '@decky/ui@4.9.2': {}
 
   '@isaacs/cliui@8.0.2':
     dependencies:
