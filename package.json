@@ -32,11 +32,11 @@
   "homepage": "https://github.com/hyacz/deck-zerotier#readme",
   "devDependencies": {
     "@decky/rollup": "^1.0.1",
-    "@rollup/rollup-linux-x64-musl": "^4.46.3",
-    "@types/react": "19.1.10",
-    "@types/react-dom": "19.1.7",
+    "@rollup/rollup-linux-x64-musl": "^4.50.0",
+    "@types/react": "19.1.12",
+    "@types/react-dom": "19.1.9",
     "@types/webpack": "^5.28.5",
-    "rollup": "^4.46.3",
+    "rollup": "^4.50.0",
     "typescript": "^5.9.2"
   },
   "dependencies": {
