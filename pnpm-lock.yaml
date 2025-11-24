@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@decky/api':
-        specifier: ^1.1.0
-        version: 1.1.2
+        specifier: ^1.1.3
+        version: 1.1.3
       '@decky/ui':
         specifier: ^4.11.0
         version: 4.11.0
@@ -45,8 +45,8 @@ importers:
 
 packages:
 
-  '@decky/api@1.1.2':
-    resolution: {integrity: sha512-lTMqRpHOrGTCyH2c1jJvkmWhOq2dcnX5/ioHbfCVmyQOBik1OM1BnzF1uROsnNDC5GkRvl3J/ATqYp6vhYpRqw==}
+  '@decky/api@1.1.3':
+    resolution: {integrity: sha512-XsPCZxfxk5I1UtylIUN3qaWQI31siQbKfbLIskkI5innEatY1m4NQqBv/6hwPaO9mKMbdqYpnh5PSJDeMEOOBA==}
 
   '@decky/rollup@1.0.1':
     resolution: {integrity: sha512-dx1VJwD7ul14PA/aZvOwAfY/GujHzqZJ+MFb4OIUVi63/z4KWMSuZrK6QWo0S4LrNW3RzB3ua6LT0WcJaNY9gw==}
@@ -941,7 +941,7 @@ packages:
 
 snapshots:
 
-  '@decky/api@1.1.2': {}
+  '@decky/api@1.1.3': {}
 
   '@decky/rollup@1.0.1':
     dependencies:
