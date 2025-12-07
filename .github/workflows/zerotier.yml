@@ -30,7 +30,7 @@ jobs:
           -e OPENSSL_INCLUDE_DIR=/usr/include/openssl \
           -v ./zerotier:/zerotier \
           ghcr.io/steamdeckhomebrew/holo-toolchain-rust \
-          bash -c "cd zerotier && make -j 4"
+          bash -c "cd zerotier && make -j 4 ZT_STATIC=1"
     
     - name: Get SHA256
       run:
