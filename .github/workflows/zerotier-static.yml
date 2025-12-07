@@ -1,4 +1,4 @@
-name: Build ZeroTier for SteamOS
+name: Build ZeroTier Static for SteamOS
 
 on:
   workflow_dispatch:
@@ -17,20 +17,13 @@ jobs:
       run: |
         VERSION=$(grep -Po '(?<=Version:).*' zerotier/zerotier-one.spec | awk '$1=$1')
         echo "VERSION=$VERSION" >> $GITHUB_ENV
-        docker run --rm \
-          ghcr.io/steamdeckhomebrew/holo-toolchain-rust \
-          bash -c "source /etc/os-release && \
-            echo OS_VERSION_ID=\$VERSION_ID && \
-            echo OS_BUILD_ID=\$BUILD_ID" >> $GITHUB_ENV
-
-    - name: Build ZeroTier
+        
+    - name: Build ZeroTier Static
       run: |
         docker run --rm \
-          -e OPENSSL_LIB_DIR=/usr/lib/ \
-          -e OPENSSL_INCLUDE_DIR=/usr/include/openssl \
           -v ./zerotier:/zerotier \
-          ghcr.io/steamdeckhomebrew/holo-toolchain-rust \
-          bash -c "cd zerotier && make -j 4"
+          alpine:3.16 \
+          sh -c "apk add git linux-headers musl-dev musl-utils gcc g++ make tar && cd zerotier && make -j 4 ZT_STATIC=1 ZT_SSO_SUPPORTED=0 one"
     
     - name: Get SHA256
       run:
@@ -40,9 +33,9 @@ jobs:
       id: create_release
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: 'zerotier-v${{ env.VERSION }}'
-        name: 'ZeroTierOne ${{ env.VERSION }}'
-        body: 'Build on SteamOS ${{ env.OS_VERSION_ID }} (${{ env.OS_BUILD_ID }}) [SHA256: ${{ env.SHA256 }}]'
+        tag_name: 'zerotier-static-v${{ env.VERSION }}'
+        name: 'ZeroTierOne Static ${{ env.VERSION }}'
+        body: 'Build Static [SHA256: ${{ env.SHA256 }}]'
         draft: false
         prerelease: false
         files: zerotier/zerotier-one
