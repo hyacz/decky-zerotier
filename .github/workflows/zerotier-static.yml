@@ -1,0 +1,35 @@
+name: Build ZeroTier Static for SteamOS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Build ZeroTier Static
+      run: |
+        docker run --rm \
+          -v ./zerotier:/zerotier \
+          alpine:3.16 \
+          sh -c "apk add git linux-headers musl-dev musl-utils gcc g++ make tar && cd zerotier && make -j 4 ZT_STATIC=1 ZT_SSO_SUPPORTED=0 one"
+    
+    - name: Get SHA256
+      run:
+        echo SHA256=$(shasum -a 256 zerotier/zerotier-one | cut -d " " -f 1) >> $GITHUB_ENV
+
+    - name: Create Release
+      id: create_release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: 'zerotier-static-v${{ env.VERSION }}'
+        name: 'ZeroTierOne ${{ env.VERSION }}'
+        body: 'Build Static (${{ env.OS_BUILD_ID }}) [SHA256: ${{ env.SHA256 }}]'
+        draft: false
+        prerelease: false
+        files: zerotier/zerotier-one
