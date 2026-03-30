@@ -2,6 +2,7 @@ export interface NodeStatus {
   address: string;
   online: boolean;
   version: string;
+  error?: string;
 }
 
 export interface Network {

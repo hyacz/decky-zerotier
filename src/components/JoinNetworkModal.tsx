@@ -15,10 +15,18 @@ const JoinNetworkModal: React.FC<{ closeModal: () => void }> = ({ closeModal }) 
       strOKButtonText="Join"
       bOKDisabled={bOKDisabled}
       onCancel={closeModal}
-      onOK={() => {
-        joinNetwork(netID)
-        toaster.toast({ title: "Joining network...", body: netID });
-        closeModal();
+      onOK={async () => {
+        try {
+          await joinNetwork(netID);
+          toaster.toast({ title: "Joining network...", body: netID });
+          closeModal();
+        } catch (e: unknown) {
+          const msg = e instanceof Error ? e.message : String(e);
+          toaster.toast({
+            title: "Failed to join network",
+            body: msg || "Unknown error",
+          });
+        }
       }}
 
     >

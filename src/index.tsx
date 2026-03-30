@@ -3,6 +3,7 @@ import {
   PanelSectionRow,
   showModal,
   DialogButton,
+  Field,
   ShowModalResult
 } from "@decky/ui";
 
@@ -15,7 +16,7 @@ import JoinNetworkModal from "./components/JoinNetworkModal";
 import NetworkButton from "./components/NetworkButton";
 import NetworkDetailModal from "./components/NetworkDetailModal";
 
-const info = callable<[], NodeStatus>("info");
+const getStatus = callable<[], { address: string; online: boolean; version: string; binary_exists: boolean; error?: string }>("status");
 const listNetworks = callable<[], Network[]>("list_networks");
 
 /**
@@ -33,25 +34,30 @@ function Content() {
   const [nodeState, setNodeState] = useState<NodeStatus>({ address: "None", online: false, version: 'None' });
   const [networks, setNetworks] = useState<Network[]>([]);
   const [modalResult, setModalResult] = useState<ShowModalResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch node status and network list from the ZeroTier API every 5 seconds
   useEffect(() => {
     const fetchData = async () => {
-      info().then(response => {
-        setNodeState(response);
-      });
+      try {
+        const s = await getStatus();
+        setNodeState({ address: s.address, online: s.online, version: s.version });
+        setError(s.error || null);
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        setError(msg || 'Failed to connect to backend');
+      }
 
-      listNetworks().then(response => {
-        setNetworks(response.map(network => network as Network));
-      })
-
-      // toaster.toast({title: "Connected to ZeroTier", body: "Version: " + nodeState.version})
+      try {
+        const nets = await listNetworks();
+        setNetworks(nets.map(network => network as Network));
+      } catch (_e) {
+        // network list failure does not affect main status display
+      }
     };
 
     fetchData();
     const interval = setInterval(fetchData, 5000);
 
-    // clean up the interval when the plugin is unmounted
     return () => clearInterval(interval);
   }, []);
 
@@ -81,13 +87,19 @@ function Content() {
   return (
     <div>
       <PanelSection title="Service">
+        {error ? (
+          <PanelSectionRow>
+            <Field label="Error" description={error} />
+          </PanelSectionRow>
+        ) : (
+          <PanelSectionRow>
+            {"My Address: " + nodeState.address}<br />
+            {"Online: " + nodeState.online}<br />
+            {"Zerotier Version: " + nodeState.version}
+          </PanelSectionRow>
+        )}
         <PanelSectionRow>
-          {"My Address: " + nodeState.address}<br />
-          {"Online: " + nodeState.online}<br />
-          {"Zerotier Version: " + nodeState.version}<br />
-        </PanelSectionRow>
-        <PanelSectionRow>
-          <DialogButton onClick={openJoinModal}>Join New Network...</DialogButton>
+          <DialogButton onClick={openJoinModal} disabled={!!error}>Join New Network...</DialogButton>
         </PanelSectionRow>
       </PanelSection>
       <PanelSection title="Networks">

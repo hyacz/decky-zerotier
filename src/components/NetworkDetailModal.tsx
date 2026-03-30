@@ -1,4 +1,4 @@
-import { callable } from "@decky/api";
+import { callable, toaster } from "@decky/api";
 import { ConfirmModal, DialogSubHeader, Field, ToggleField } from "@decky/ui";
 import { Network } from "../model";
 import { useState } from "react";
@@ -31,7 +31,11 @@ const NetworkDetailModal: React.FC<NetworkDetailModalProps> = ({ network, closeM
    */
   const handleOnChange = (option: string, value: boolean) => {
     setNet(prevState => ({ ...prevState, [option]: value }));
-    updateNetwork(net.id, option, value);
+    updateNetwork(net.id, option, value).catch((e: unknown) => {
+      const msg = e instanceof Error ? e.message : String(e);
+      toaster.toast({ title: "Failed to update setting", body: msg || "Unknown error" });
+      setNet(prevState => ({ ...prevState, [option]: !value }));
+    });
   }
 
   if (net.status === "DISCONNECTED") {
@@ -40,15 +44,23 @@ const NetworkDetailModal: React.FC<NetworkDetailModalProps> = ({ network, closeM
         strTitle={net.name ? net.name : "UNKNOW NAME"}
         strOKButtonText="Connect"
         strMiddleButtonText="Forget"
-        onOK={() => {
-          joinNetwork(net.id);
-          // toaster.toast({ title: "Connecting network...", body: net.id });
-          closeModal();
+        onOK={async () => {
+          try {
+            await joinNetwork(net.id);
+            closeModal();
+          } catch (e: unknown) {
+            const msg = e instanceof Error ? e.message : String(e);
+            toaster.toast({ title: "Failed to connect", body: msg || "Unknown error" });
+          }
         }}
-        onMiddleButton={() => {
-          forgetNetwork(net.id);
-          // toaster.toast({ title: "Forgetting network...", body: net.id });
-          closeModal();
+        onMiddleButton={async () => {
+          try {
+            await forgetNetwork(net.id);
+            closeModal();
+          } catch (e: unknown) {
+            const msg = e instanceof Error ? e.message : String(e);
+            toaster.toast({ title: "Failed to forget network", body: msg || "Unknown error" });
+          }
         }}
         onCancel={closeModal}
       />
@@ -58,9 +70,14 @@ const NetworkDetailModal: React.FC<NetworkDetailModalProps> = ({ network, closeM
       <ConfirmModal
         strTitle={net.name ? net.name : "UNKNOW NAME"}
         strOKButtonText="Disconnect"
-        onOK={() => {
-          disconnectNetwork(net.id);
-          closeModal();
+        onOK={async () => {
+          try {
+            await disconnectNetwork(net.id);
+            closeModal();
+          } catch (e: unknown) {
+            const msg = e instanceof Error ? e.message : String(e);
+            toaster.toast({ title: "Failed to disconnect", body: msg || "Unknown error" });
+          }
         }}
         strCancelButtonText="Close"
         onCancel={closeModal}

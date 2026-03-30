@@ -80,6 +80,30 @@ class Plugin:
                 break
 
 
+    async def status(self) -> dict:
+        """
+        Returns diagnostic information about the ZeroTier service.
+
+        Checks if the binary exists and attempts to get node info.
+        Returns a dict with keys: binary_exists, address, online, version, error.
+        """
+        result = {"binary_exists": os.path.exists(ZT_ONE)}
+
+        if result["binary_exists"]:
+            try:
+                info = await self.info()
+                result.update({
+                    "address": info["address"],
+                    "online": info["online"],
+                    "version": info["version"],
+                })
+            except Exception as e:
+                result["error"] = str(e)
+        else:
+            result["error"] = f"Binary not found at {ZT_ONE}"
+
+        return result
+
     async def info(self) -> dict:
         """
         Retrieves information about the ZeroTier network interface.
